@@ -22,7 +22,7 @@ type DogList struct {
 }
 
 func (dogList DogList) status() {
-	// fmt.Println(dogList.Message)
+	fmt.Println(dogList.Message)
 	if len(dogList.Message) != 0 {
 		dogList.Status = "success"
 	} else {
