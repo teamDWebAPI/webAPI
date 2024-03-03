@@ -9,6 +9,7 @@ import (
 
 type GetListAll struct {
 	Message map[string]interface{} `json:"message"`
+	Status  string                 `json:"status"`
 }
 
 type Dog struct {
@@ -30,7 +31,7 @@ func (dogList *DogList) status() {
 	}
 }
 
-// dog apiから呼び出したjsonを指定の構造体に格納する汎用関数
+// dog apiから呼び出したjsonを指定の構造体に格納する関数
 func getResponseFromDogApi(st interface{}, endpoint string) {
 	resp, err := http.Get(endpoint)
 	if err != nil {
@@ -77,6 +78,7 @@ func getDogHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(query) == 0 {
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
 		json.NewEncoder(w).Encode(dogList)
 	} else {
 		keyword := query.Get("keyword")
@@ -92,6 +94,7 @@ func getDogHandler(w http.ResponseWriter, r *http.Request) {
 		response.status()
 
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
 		json.NewEncoder(w).Encode(response)
 	}
 }
@@ -101,19 +104,38 @@ type getUrl struct {
 	Status  string   `json:"status"`
 }
 
+func getEndpoint(breedName string, subBreedName string, count string) string {
+	endpoint := "https://dog.ceo/api/"
+
+	if count == "" {
+		count = "1"
+	}
+
+	if breedName != "" && subBreedName != "" {
+		endpoint += "breed/" + breedName + "/" + subBreedName + "/images/random/" + count
+	} else if breedName != "" && subBreedName == "" {
+		endpoint += "breed/" + breedName + "/images/random/" + count
+	} else if breedName == "" && subBreedName == "" {
+		endpoint += "breeds/image/random/" + count
+	}
+
+	return endpoint
+}
+
 func getUrlHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	breedName := query.Get("breed")
 	subBreedName := query.Get("sub-breed")
 	count := query.Get("c")
 
-	var urls getUrl
+	endpoint := getEndpoint(breedName, subBreedName, count)
 
-	endpoint := "https://dog.ceo/api/breed/" + breedName + "/" + subBreedName + "/images/random/" + count
+	var urls getUrl
 
 	getResponseFromDogApi(&urls, endpoint)
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
 	json.NewEncoder(w).Encode(urls)
 }
 
