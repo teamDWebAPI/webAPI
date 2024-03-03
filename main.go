@@ -21,11 +21,11 @@ type DogList struct {
 	Status  string `json:"status"`
 }
 
-func (dogList DogList) status() {
-	fmt.Println(dogList.Message)
+func (dogList *DogList) status() {
 	if len(dogList.Message) != 0 {
 		dogList.Status = "success"
 	} else {
+		dogList.Message = []Dog{}
 		dogList.Status = "failed"
 	}
 }
@@ -83,7 +83,6 @@ func getDogHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		response.status()
-		fmt.Println(len(response.Message))
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
 		json.NewEncoder(w).Encode(response)
