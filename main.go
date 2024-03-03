@@ -71,10 +71,10 @@ func getDogHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(query) == 0 {
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
 		json.NewEncoder(w).Encode(dogList)
 	} else {
 		keyword := query.Get("keyword")
-
 		var response DogList
 
 		for _, dog := range dogList.Message {
@@ -82,10 +82,9 @@ func getDogHandler(w http.ResponseWriter, r *http.Request) {
 				response.Message = append(response.Message, dog)
 			}
 		}
-
 		response.status()
-
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
 		json.NewEncoder(w).Encode(response)
 	}
 }
