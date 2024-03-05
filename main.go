@@ -9,6 +9,7 @@ import (
 
 type GetListAll struct {
 	Message map[string]interface{} `json:"message"`
+	Status  string                 `json:"status"`
 }
 
 type Dog struct {
@@ -30,12 +31,9 @@ func (dogList *DogList) status() {
 	}
 }
 
-var dogList DogList
-
-func init() {
-	var dogListAll GetListAll
-
-	resp, err := http.Get("https://dog.ceo/api/breeds/list/all")
+// dog apiから呼び出したjsonを指定の構造体に格納する関数
+func getResponseFromDogApi(st interface{}, endpoint string) {
+	resp, err := http.Get(endpoint)
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -50,10 +48,19 @@ func init() {
 
 	body, _ := io.ReadAll(resp.Body)
 
-	if err := json.Unmarshal(body, &dogListAll); err != nil {
+	if err := json.Unmarshal(body, &st); err != nil {
 		fmt.Println(err)
 		return
 	}
+
+}
+
+var dogList DogList
+
+// main()の前に呼ばれる特殊関数
+func init() {
+	var dogListAll GetListAll
+	getResponseFromDogApi(&dogListAll, "https://dog.ceo/api/breeds/list/all")
 
 	for key, value := range dogListAll.Message {
 		var dog Dog
@@ -83,10 +90,51 @@ func getDogHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		response.status()
+
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
 		json.NewEncoder(w).Encode(response)
 	}
+}
+
+type getUrl struct {
+	Message []string `json:"message"`
+	Status  string   `json:"status"`
+}
+
+func getEndpoint(breedName string, subBreedName string, count string) string {
+	endpoint := "https://dog.ceo/api/"
+
+	if count == "" {
+		count = "1"
+	}
+
+	if breedName != "" && subBreedName != "" {
+		endpoint += "breed/" + breedName + "/" + subBreedName + "/images/random/" + count
+	} else if breedName != "" && subBreedName == "" {
+		endpoint += "breed/" + breedName + "/images/random/" + count
+	} else if breedName == "" && subBreedName == "" {
+		endpoint += "breeds/image/random/" + count
+	}
+
+	return endpoint
+}
+
+func getUrlHandler(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	breedName := query.Get("breed")
+	subBreedName := query.Get("sub-breed")
+	count := query.Get("c")
+
+	endpoint := getEndpoint(breedName, subBreedName, count)
+
+	var urls getUrl
+
+	getResponseFromDogApi(&urls, endpoint)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
+	json.NewEncoder(w).Encode(urls)
 }
 
 func main() {
@@ -94,6 +142,7 @@ func main() {
 
 	// ルートとハンドラ関数を定義
 	http.HandleFunc("/api/list", getDogHandler)
+	http.HandleFunc("/api/images", getUrlHandler)
 
 	// 8000番ポートでサーバを開始
 	http.ListenAndServe(":8000", nil)
