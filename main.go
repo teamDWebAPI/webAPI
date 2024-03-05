@@ -82,7 +82,6 @@ func getDogHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(dogList)
 	} else {
 		keyword := query.Get("keyword")
-
 		var response DogList
 
 		for _, dog := range dogList.Message {
@@ -90,7 +89,6 @@ func getDogHandler(w http.ResponseWriter, r *http.Request) {
 				response.Message = append(response.Message, dog)
 			}
 		}
-
 		response.status()
 
 		w.Header().Set("Content-Type", "application/json")
