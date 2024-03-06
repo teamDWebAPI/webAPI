@@ -1,0 +1,30 @@
+.code-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 40px;
+}
+.dog-selector{
+    font-size: 30px;
+    margin-bottom: 20px;
+}
+
+.query-selector{
+    font-size: 30px;
+    margin-bottom: 20px;
+}
+
+.button-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    width: 25%;
+    margin-bottom: 20px;
+}
+
+.json-block{
+    background-color: bisque;
+    font-size: 20px;
+    padding: 20px;
+    width: 80%;
+}

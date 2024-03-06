@@ -4,11 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WebAPI</title>
+    <link rel="stylesheet" href="index.css">
   </head>
   <body>
     <div class="code-container">
       <span class="code">
-        http://localhost:8000/api/list?keyword=
+        http://localhost:8000/api/
+        <select class="query-selector">
+          <option value="list">list</option>
+          <option value="images">images</option>
+        </select>
+        ?keyword=
         <select class="dog-selector">
           <option value="affenpinscher">affenpinscher</option>
           <option value="african">african</option>
@@ -164,7 +170,7 @@
         <button class="fetch-btn">Fetch</button>
         <button class="clear-btn">Clear</button>
       </span>
-      <main class="json-block">
+      <main id="json-block">
       </main>
     </div>
   </body>
