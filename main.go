@@ -5,17 +5,34 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
+	"strconv"
+	"strings"
 )
 
 type GetListAll struct {
-	Message map[string]interface{} `json:"message"`
-	Status  string                 `json:"status"`
+	Message map[string][]string `json:"message"`
+	Status  string              `json:"status"`
 }
 
 type Dog struct {
-	ID       int         `json:"id"`
-	Breed    string      `json:"breed"`
-	Subbreed interface{} `json:"sub_breed"`
+	ID       int      `json:"id"`
+	Breed    string   `json:"breed"`
+	Subbreed []string `json:"sub_breed"`
+}
+
+type ResponseDetail struct {
+	Message Dog    `json:"message"`
+	Status  string `json:"status"`
+}
+
+func (detail *ResponseDetail) status() {
+	if detail.Message.ID != 0 {
+		detail.Status = "success"
+	} else {
+		detail.Message.Subbreed = []string{}
+		detail.Status = "failed"
+	}
 }
 
 type BreedNameList struct {
@@ -87,13 +104,16 @@ func init() {
 func showListHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 
+	// クエリが指定されていないときlistALLを返す
 	if len(query) == 0 {
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
 		json.NewEncoder(w).Encode(breedNameList)
 	} else {
+		// filterで指定された文字から始まるbreedのlistを返す
 		filter := query.Get("filter")
-		sort := query.Get("sort")
+		// クエリsort=ascend（昇順） or descend（降順）で返すリストのソートを行う
+		sor := query.Get("sort")
 
 		var response BreedNameList
 		if len(filter) > 0 {
@@ -102,16 +122,54 @@ func showListHandler(w http.ResponseWriter, r *http.Request) {
 					response.Message = append(response.Message, dog)
 				}
 			}
-
-			response.status()
+		} else {
+			response = breedNameList
 		}
 
+		if sor == "ascend" {
+			sort.Strings(response.Message)
+		} else if sor == "descend" {
+			sort.Slice(response.Message, func(i, j int) bool {
+				return response.Message[i] > response.Message[j]
+			})
+		}
+
+		response.status()
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
 		json.NewEncoder(w).Encode(response)
 	}
 }
 
+// itemの詳細を返すハンドラー
+func detailHandler(w http.ResponseWriter, r *http.Request) {
+	parts := strings.Split(r.URL.Path, "/")
+	id, err := strconv.Atoi(parts[len(parts)-1])
+
+	var responseDetail ResponseDetail
+	if err != nil {
+		// idではなくbreedで詳細を取得
+		for _, doc := range breedDetailList {
+			if doc.Breed == parts[len(parts)-1] {
+				responseDetail.Message = doc
+			}
+		}
+	} else {
+		// idで詳細を取得
+		for _, doc := range breedDetailList {
+			if doc.ID == id {
+				responseDetail.Message = doc
+			}
+		}
+	}
+	responseDetail.status()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5500") // localhost:5500のオリジンからのアクセスを許可（デモ用）
+	json.NewEncoder(w).Encode(responseDetail)
+}
+
+// クエリの有無によってをDogapiのエンドポイントを指定し返す関数
 func getEndpoint(breedName string, subBreedName string, count string) string {
 	endpoint := "https://dog.ceo/api/"
 
@@ -126,15 +184,16 @@ func getEndpoint(breedName string, subBreedName string, count string) string {
 	} else if breedName == "" && subBreedName == "" {
 		endpoint += "breeds/image/random/" + count
 	}
-
+	fmt.Println(endpoint)
 	return endpoint
 }
 
+// dogapiから写真のURLを返すハンドラー
 func getUrlHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	breedName := query.Get("breed")
 	subBreedName := query.Get("sub-breed")
-	count := query.Get("c")
+	count := query.Get("count")
 
 	endpoint := getEndpoint(breedName, subBreedName, count)
 
@@ -151,8 +210,9 @@ func main() {
 	fmt.Println("Starting the server!")
 
 	// ルートとハンドラ関数を定義
-	http.HandleFunc("/api/list", showListHandler)
-	http.HandleFunc("/api/images", getUrlHandler)
+	http.HandleFunc("/api/list", showListHandler) // eg. /api/list?filter=a&sort=ascend
+	http.HandleFunc("/api/item/", detailHandler)  // eg. /api/item/{id} or /api/item/{breed}
+	http.HandleFunc("/api/images", getUrlHandler) // eg. /api/images?breed=hound&sub-breed=afghan?count=3
 
 	// 8000番ポートでサーバを開始
 	http.ListenAndServe(":8000", nil)
