@@ -32,6 +32,25 @@
 </tr>
 </table>
 
+## 使用方法
+### クローン
+このプロジェクトをあなたのPCで実行するために、クローンします。
+
+下記手順でクローンしてください。
+
+1. リポジトリをクローンする
+```
+git clone https://github.com/teamDWebAPI/webAPI.git
+```
+
+1. クローンしたリポジトリへ移動する
+```
+cd webAPI
+```
+### ローカルでサーバーを起動する
+```
+go run main.go
+```
 ## エンドポイント
 1. 犬のリスト表示`/api/list?filter=a&sort=ascend`
 2. 犬の詳細表示`/api/item/{id} or /api/item/{breed}`
