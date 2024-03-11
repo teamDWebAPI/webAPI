@@ -3,15 +3,18 @@ const clearBtn=document.querySelector(".clear-btn")
 const jsonBlock=document.getElementById("json-block")
 
 
-async function getDogList(query,keyword, jsonBlock) {
+async function getDogList(breed,jsonBlock) {
     const serverUrl = "http://localhost:8000/api";
     try {
-        const response = await fetch(`${serverUrl}/${query}?keyword=${keyword}`,{ mode: "cors" });
+        console.log(`${serverUrl}/images?breed=${breed}`)
+        const response = await fetch(`${serverUrl}/images?breed=${breed}`,{ mode: "cors" });
         if (!response.ok) {
             throw new Error(`Error fetching data: ${response.statusText}`);
         }
         const data = await response.json();
-        jsonBlock.innerHTML = JSON.stringify(data, null, "\t");
+        const img_element = document.createElement('img');
+        img_element.src = data["message"][0];
+        jsonBlock.appendChild(img_element);
     } catch (error) {
         console.error("Error:", error);
     }
@@ -24,8 +27,9 @@ fetchBtn.addEventListener("click",(e)=>{
     removeJson(jsonBlock)
     jsonBlock.classList.add("json-block")
     const dogValue=document.querySelector(".dog-selector").value
-    const queryValue=document.querySelector(".query-selector").value
-    getDogList(queryValue,dogValue,jsonBlock)
+    // const subbreedValue=document.querySelector(".subbreed-selector").value
+    // const countValue=document.querySelector(".count").value
+    getDogList(dogValue,jsonBlock)
 })
 
 
